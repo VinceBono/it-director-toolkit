@@ -13,6 +13,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
 
 import ad_hygiene  # noqa: E402
+import asset_inventory  # noqa: E402
 import backup_verify  # noqa: E402
 
 FIXTURE = Path(__file__).parent / "fixtures" / "users.csv"
@@ -48,6 +49,27 @@ class AdHygieneTest(unittest.TestCase):
             with self.assertRaises(ValueError):
                 ad_hygiene.load(bad)
             self.assertEqual(ad_hygiene.main([str(bad)]), 2)
+
+
+class AssetInventoryTest(unittest.TestCase):
+    def test_counts_enabled_computers_and_flags_unsupported_and_stale(self):
+        rows = ad_hygiene.load(FIXTURE.with_name("computers.csv"), asset_inventory.REQUIRED)
+        counts, findings = asset_inventory.check(rows, NOW)
+        self.assertEqual(counts["Windows 11 Pro"], 2)
+        self.assertEqual(counts["unknown"], 1)
+        self.assertNotIn("Windows 7 Professional", counts)  # disabled
+        self.assertEqual(
+            [(f["computer"], f["severity"], f["issue"]) for f in findings],
+            [
+                ("PC-OLD", "high", "Windows 10 Pro is out of support"),
+                ("SRV-FILE", "high", "Windows Server 2012 R2 Standard is out of support"),
+                ("PC-002", "medium", "not seen for 152 days"),
+                ("PC-GHOST", "medium", "enabled but never seen on the domain"),
+            ],
+        )
+
+    def test_users_export_is_rejected(self):
+        self.assertEqual(asset_inventory.main([str(FIXTURE)]), 2)
 
 
 class BackupVerifyTest(unittest.TestCase):

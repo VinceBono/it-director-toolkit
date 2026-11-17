@@ -52,10 +52,10 @@ def check(rows: list[dict[str, str]], now: datetime, stale_days: int = 90, passw
     return sorted(findings, key=lambda f: (order[f["severity"]], f["account"].lower()))
 
 
-def load(path: Path) -> list[dict[str, str]]:
+def load(path: Path, required: set[str] = REQUIRED) -> list[dict[str, str]]:
     with path.open(encoding="utf-8-sig", newline="") as f:
         reader = csv.DictReader(f)
-        missing = REQUIRED - set(reader.fieldnames or [])
+        missing = required - set(reader.fieldnames or [])
         if missing:
             raise ValueError(f"{path}: missing columns {', '.join(sorted(missing))}")
         return list(reader)
