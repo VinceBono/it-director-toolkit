@@ -28,12 +28,13 @@ def _sha256(path: Path) -> str:
 
 
 def _archive_error(path: Path) -> str | None:
+    suffix = path.suffix.lower()  # Windows backup jobs often write .ZIP
     try:
-        if path.suffix == ".zip":
+        if suffix == ".zip":
             with zipfile.ZipFile(path) as z:
                 bad = z.testzip()
                 return f"corrupt member {bad}" if bad else None
-        if path.suffix in {".gz", ".tgz"}:
+        if suffix in {".gz", ".tgz"}:
             with gzip.open(path, "rb") as f:
                 while f.read(CHUNK):
                     pass
