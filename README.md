@@ -10,6 +10,7 @@ No dependencies beyond Python 3.10+. Nothing here changes a system; the tools on
 |---|---|
 | [`tools/ad_hygiene.py`](tools/ad_hygiene.py) | Which enabled accounts are stale, never used, or have passwords that never expire? |
 | [`tools/asset_inventory.py`](tools/asset_inventory.py) | How many computers run each operating system, and which are unsupported or gone? |
+| [`tools/patch_report.py`](tools/patch_report.py) | Which computers have not installed a Windows update lately? |
 | [`tools/backup_verify.py`](tools/backup_verify.py) | Did last night's backup actually run, and can the file be read? |
 
 ## Account hygiene
@@ -68,6 +69,29 @@ MEDIUM PC-GHOST                enabled but never seen on the domain
 - It only knows what Active Directory knows. Machines that never joined the domain (PLCs, workgroup HMIs,
   phones, printers) are not in the export.
 
+## Patch report
+
+```powershell
+.\tools\export-hotfixes.ps1 -ComputerName PC-001, PC-002, SRV-FILE -Path hotfixes.csv
+python tools\patch_report.py hotfixes.csv
+```
+
+```
+PC-ODD                  no update has an install date
+PC-002                  last update KB4001 was 173 days ago
+SRV-FILE                last update KB3001 was 82 days ago
+
+4 computer(s) in the export, 3 behind
+```
+
+- A computer is behind when its newest update is older than `--max-days` (default 45, a monthly cycle plus
+  slack). `--json` works as above.
+- The export asks each computer for its update list (`Get-HotFix`), so it needs network access and admin
+  rights on them. Computers it cannot reach are named on screen and left out of the file, so compare the
+  count against the asset inventory.
+- It measures how recently a machine was patched, not whether a specific fix is installed. `Get-HotFix`
+  also misses some update types, such as Office and driver updates.
+
 ## Backup verification
 
 ```bash
@@ -86,12 +110,11 @@ Run it from Task Scheduler or cron and alert on a non-zero exit code.
 ## Limits
 
 - **Tested on made-up data only.** The tests use a synthetic user list and files created in a temp folder.
-  `export-ad-users.ps1` and `export-ad-computers.ps1` have not been run against a real domain.
+  The three export scripts have not been run against a real domain or remote computer.
 - **A readable archive is not a restorable backup.** `backup_verify.py` proves the file is fresh and intact.
   Only a test restore proves you can recover.
 - **Last sign-in is approximate.** Active Directory replicates it between domain controllers with up to
   14 days of lag, so don't set `--stale-days` below about 30.
-- **Planned, not built:** patch reporting.
 
 ## Development
 
