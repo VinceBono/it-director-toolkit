@@ -87,6 +87,10 @@ class BackupVerifyTest(unittest.TestCase):
         (self.dir / "b.gz").write_bytes(whole[: len(whole) // 2])
         self.assertIn("unreadable archive", backup_verify.verify(self.dir, "*.gz", 26, 1)[0])
 
+    def test_uppercase_extension_is_still_checked(self):
+        (self.dir / "NIGHTLY.ZIP").write_bytes(b"this is not a zip")
+        self.assertIn("unreadable archive", backup_verify.verify(self.dir, "*", 26, 1)[0])
+
     def test_checksum_sidecar_is_compared(self):
         path = self.good_zip()
         sidecar = self.dir / "backup.zip.sha256"
