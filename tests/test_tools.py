@@ -15,6 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
 import ad_hygiene  # noqa: E402
 import asset_inventory  # noqa: E402
 import backup_verify  # noqa: E402
+import patch_report  # noqa: E402
 
 FIXTURE = Path(__file__).parent / "fixtures" / "users.csv"
 NOW = datetime(2026, 11, 1)
@@ -70,6 +71,23 @@ class AssetInventoryTest(unittest.TestCase):
 
     def test_users_export_is_rejected(self):
         self.assertEqual(asset_inventory.main([str(FIXTURE)]), 2)
+
+
+class PatchReportTest(unittest.TestCase):
+    def test_flags_computers_by_their_newest_update_oldest_first(self):
+        rows = ad_hygiene.load(FIXTURE.with_name("hotfixes.csv"), patch_report.REQUIRED)
+        got = [(f["computer"], f["issue"]) for f in patch_report.check(rows, NOW)]
+        self.assertEqual(
+            got,
+            [
+                ("PC-ODD", "no update has an install date"),
+                ("PC-002", "last update KB4001 was 173 days ago"),
+                ("SRV-FILE", "last update KB3001 was 82 days ago"),
+            ],
+        )
+
+    def test_wrong_export_is_rejected(self):
+        self.assertEqual(patch_report.main([str(FIXTURE)]), 2)
 
 
 class BackupVerifyTest(unittest.TestCase):
