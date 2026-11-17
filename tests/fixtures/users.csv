@@ -1,0 +1,7 @@
+"SamAccountName","Enabled","LastLogon","PasswordNeverExpires","PasswordLastSet","AdminCount"
+"good.user","True","2026-10-25T08:00:00","False","2026-06-01T09:00:00",""
+"stale.user","True","2026-07-01T08:00:00","False","2024-12-31T09:00:00",""
+"never.used","True","","False","2026-09-01T09:00:00",""
+"svc.print","True","2026-10-30T08:00:00","True","2026-03-01T09:00:00",""
+"old.admin","True","2026-01-01T08:00:00","True","2026-02-01T09:00:00","1"
+"left.company","False","2025-01-01T08:00:00","True","2023-01-01T09:00:00","1"
